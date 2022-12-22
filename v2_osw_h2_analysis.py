@@ -134,6 +134,8 @@ parent_path = os.path.abspath('')
 results_dir = parent_path + '/examples/H2_Analysis/results/'
 floris_dir = parent_path + '/floris_input_files/'
 
+print('Parent path = ', parent_path)
+
 # ORBIT financial information
 orbit_path = ('examples/H2_Analysis/OSW_H2_sites_turbines_and_costs.xlsx')
 xl = pd.ExcelFile(orbit_path)
