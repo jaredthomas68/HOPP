@@ -1,17 +1,16 @@
 # tools to add floris to the hybrid simulation class
 import numpy as np
 import matplotlib.pyplot as plt
-from floris.tools import FlorisInterface
+from floris import FlorisModel
 import csv
 import yaml
 import os
-
 
 class Floris:
 
     def __init__(self, config_dict, site, timestep=()):
 
-        self.fi = FlorisInterface(config_dict["floris_config"])
+        self.fi = FlorisModel(config_dict["floris_config"])
 
         self.site = site
         self.wind_resource_data = self.site.wind_resource.data
@@ -31,7 +30,7 @@ class Floris:
         self.wind_farm_yCoordinates = self.fi.layout_y
         self.nTurbs = len(self.wind_farm_xCoordinates)
         self.turb_rating = config_dict["turbine_rating_kw"]
-        self.wind_turbine_rotor_diameter = self.fi.floris.farm.rotor_diameters[0]
+        self.wind_turbine_rotor_diameter = self.fi.farm.rotor_diameters[0]
         self.system_capacity = self.nTurbs * self.turb_rating
 
         # turbine power curve (array of kW power outputs)

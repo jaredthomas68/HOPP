@@ -108,8 +108,8 @@ class GreenHeartComponent(om.ExplicitComponent):
             lcoh = greenheart_output.lcoh
             steel_finance = greenheart_output.steel_finance
             ammonia_finance = greenheart_output.ammonia_finance
-            solar_area = greenheart_output. 
-            platform_area = greenheart_output
+            # solar_area = greenheart_output. 
+            # platform_area = greenheart_output
 
         outputs["lcoe"] = lcoe
         outputs["lcoh"] = lcoh
@@ -201,11 +201,11 @@ class HOPPComponent(om.ExplicitComponent):
         
         if ("turbine_x" in inputs) or ("turbine_y" in inputs):
             if "turbine_x" not in inputs:
-                hi.system.wind._system_model.fi.reinitialize(layout_y=inputs["turbine_y"], time_series=True)
+                hi.system.wind._system_model.fi.set(layout_y=inputs["turbine_y"])
             elif "turbine_y" not in inputs:
-                hi.system.wind._system_model.fi.reinitialize(layout_x=inputs["turbine_x"], time_series=True)
+                hi.system.wind._system_model.fi.set(layout_x=inputs["turbine_x"])
             else:
-                hi.system.wind._system_model.fi.reinitialize(layout_x=inputs["turbine_x"], layout_y=inputs["turbine_y"], time_series=True)
+                hi.system.wind._system_model.fi.set(layout_x=inputs["turbine_x"], layout_y=inputs["turbine_y"])
                 
         # run simulation
         hi.simulate(25)
