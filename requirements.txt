@@ -5,7 +5,7 @@ Plotly
 Pyomo>=6.1.2
 diskcache
 fastkml
-floris
+floris>=4.0
 future
 global_land_mask
 humpday
