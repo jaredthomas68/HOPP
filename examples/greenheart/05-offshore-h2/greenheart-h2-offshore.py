@@ -19,11 +19,12 @@ from ORBIT.core.library import initialize_library
 initialize_library(os.path.join(os.getcwd(), "./input/"))
 
 # HOPP imports
-from greenheart.simulation.greenheart_simulation import run_simulation, GreenHeartSimulationConfig
+from greenheart.simulation.greenheart_simulation import GreenHeartSimulationConfig
+from greenheart.tools.optimization.gc_run_greenheart import run_greenheart
 
 # run the stuff
 if __name__ == "__main__":
-    ## this should result in  5.16 $/kg LCOH
+    ## this should result in  7.06 $/kg LCOH
 
     # load inputs as needed
     turbine_model="osw_18MW"
@@ -37,8 +38,8 @@ if __name__ == "__main__":
         filename_hopp_config,
         filename_greenheart_config,
         filename_turbine_config,
-        filename_orbit_config,
         filename_floris_config,
+        filename_orbit_config=filename_orbit_config,
         verbose=True,
         show_plots=False,
         save_plots=True,
@@ -47,4 +48,4 @@ if __name__ == "__main__":
         plant_design_scenario=1
     )
 
-    run_simulation(config)
+    run_greenheart(config, run_only=True)
