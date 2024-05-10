@@ -391,8 +391,6 @@ class PoseOptimization(object):
         # solar/platform size
         # if self.config.greenheart_config["opt_options"]["constraints"]["solar_platform_ratio"]["flag"]:
         #     upper = self.config.greenheart_config["opt_options"]["constraints"]["solar_platform_ratio"]["upper"]
-
-
         #     opt_prob.model.add_subsystem("con_boundary", subsys=BoundaryDistanceComponent(hopp_interface=self.config.greenheart_config, turbine_x_init=turbine_x_init, turbine_y_init=turbine_y_init), promotes=["*"])
         #     opt_prob.model.add_constraint("boundary_distance_vec", lower=0)
 
