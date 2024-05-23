@@ -16,7 +16,6 @@ with open(ROOT / "hopp" / "version.py") as version_file:
     VERSION = version_file.read().strip()
 
 # Get package data
-<<<<<<< HEAD
 hopp_base_path = Path("hopp")
 hopp_package_data_files = [
     *hopp_base_path.glob("tools/analysis/bos/BOSLookup.csv"),
