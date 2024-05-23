@@ -16,6 +16,7 @@ with open(ROOT / "hopp" / "version.py") as version_file:
     VERSION = version_file.read().strip()
 
 # Get package data
+<<<<<<< HEAD
 hopp_base_path = Path("hopp")
 hopp_package_data_files = [
     *hopp_base_path.glob("tools/analysis/bos/BOSLookup.csv"),
@@ -31,6 +32,21 @@ greenheart_base_path = Path("greenheart")
 greenheart_package_data_files = [
     greenheart_base_path / "hydrogen" / "h2_storage" / "pressure_vessel" / "compressed_gas_storage_model_20221021" / "Tankinator.xlsx",
     *greenheart_base_path.glob("hydrogen/h2_transport/data_tables/*.csv"),
+]
+
+hopp_base_path = Path("hopp")
+hopp_package_data_files = [
+    hopp_base_path / "hydrogen" / "h2_storage" / "pressure_vessel" / "compressed_gas_storage_model_20221021" / "Tankinator.xlsx",
+    *hopp_base_path.glob("hydrogen/h2_transport/data_tables/*.csv"),
+    *hopp_base_path.glob("tools/analysis/bos/BOSLookup.csv"),
+    *hopp_base_path.glob("simulation/technologies/layout/flicker_data/*shadow.txt"),
+    *hopp_base_path.glob("simulation/technologies/layout/flicker_data/*flicker.txt"),
+    *hopp_base_path.glob("simulation/technologies/csp/pySSC_daotk/libs/*"),
+    *hopp_base_path.glob("simulation/technologies/csp/pySSC_daotk/tower_data/*"),
+    *hopp_base_path.glob("simulation/technologies/csp/pySSC_daotk/trough_data/*"),
+    *hopp_base_path.glob("simulation/technologies/dispatch/cbc_solver/cbc-win64/*"),
+    *hopp_base_path.glob("simulation/resource_files/*"),
+    *hopp_base_path.glob("simulation/resource_files/*/*")
 ]
 
 package_data = {
