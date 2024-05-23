@@ -446,7 +446,7 @@ def h2_main():
                                     H2_Results['feedstock_cost_h2_levelized_hopp'],
                                     hybrid_installed_cost, H2A_Results['Total Hydrogen Cost ($/kgH2)'],
                                     H2_Results['total_unit_cost_of_hydrogen'],
-                                    output_dir='results/',
+                                    output_dir='results',
                                     monthly_separation=False, reopt_was_run=run_reopt_flag)
 
                 # Step 9: Plot HOPP Production, Curtailment, and Hydrogen Production Profiles

@@ -270,8 +270,8 @@ def run_hybrid_calc(year, site_num, scenario_descriptions, results_dir, load_res
         .format(site_lat, site_lon, wind_size, solar_size, ppa_price,
                 hub_height)
 
-    if os.path.exists(os.path.join('results/', each_site_filename)):
-        hopp_outputs_all_dataframe = pd.read_csv(os.path.join('results/',each_site_filename))
+    if os.path.exists(os.path.join('results', each_site_filename)):
+        hopp_outputs_all_dataframe = pd.read_csv(os.path.join('results',each_site_filename))
         print("Analysis already run for {}. Loading from file.",format(each_site_filename))
     else:
 
