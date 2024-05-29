@@ -5,6 +5,7 @@ import warnings
 import numpy as np
 import pandas as pd
 from attrs import define, field
+import copy
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
@@ -33,6 +34,7 @@ import greenheart.tools.eco.finance as he_fin
 import greenheart.tools.eco.hopp_mgmt as he_hopp
 import greenheart.tools.eco.utilities as he_util
 import greenheart.tools.eco.hydrogen_mgmt as he_h2
+
 
 @define
 class GreenHeartSimulationConfig:
@@ -157,10 +159,10 @@ class GreenHeartSimulationConfig:
             self.orbit_config["plant"]["num_turbines"] = int(
                 self.wind_rating * 1e-3 / self.turbine_config["turbine_rating"]
             )
-            self.hopp_config["technologies"]["wind"]["num_turbines"] = (
-                self.orbit_config["plant"]["num_turbines"]
-            )
-        
+            self.hopp_config["technologies"]["wind"][
+                "num_turbines"
+            ] = self.orbit_config["plant"]["num_turbines"]
+
         if self.grid_connection != None:
             self.greenheart_config["project_parameters"][
                 "grid_connection"
@@ -238,24 +240,43 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
     # run orbit for wind plant construction and other costs
     ## TODO get correct weather (wind, wave) inputs for ORBIT input (possibly via ERA5)
     if config.design_scenario["wind_location"] == "offshore":
-        
-        if config.orbit_config["plant"]["num_turbines"] != config.hopp_config["technologies"]["wind"]["num_turbines"]:
+
+        if (
+            config.orbit_config["plant"]["num_turbines"]
+            != config.hopp_config["technologies"]["wind"]["num_turbines"]
+        ):
             config.orbit_config["plant"].update(
-                {"num_turbines": config.hopp_config["technologies"]["wind"]["num_turbines"]}
+                {
+                    "num_turbines": config.hopp_config["technologies"]["wind"][
+                        "num_turbines"
+                    ]
+                }
             )
-            warnings.warn(f"'num_turbines' in the orbit_config was {config.orbit_config['plant']['num_turbines']}, but 'num_turbines' in" 
-                    f"hopp_config was {config.hopp_config['technologies']['wind']['num_turbines']}. The 'num_turbines' value in the orbit_config"
-                    "is being overwritten with the value from the hopp_config", UserWarning)
-            
-        if config.orbit_config["site"]["depth"] != config.greenheart_config["site"]["depth"]:
+            warnings.warn(
+                f"'num_turbines' in the orbit_config was {config.orbit_config['plant']['num_turbines']}, but 'num_turbines' in"
+                f"hopp_config was {config.hopp_config['technologies']['wind']['num_turbines']}. The 'num_turbines' value in the orbit_config"
+                "is being overwritten with the value from the hopp_config",
+                UserWarning,
+            )
+
+        if (
+            config.orbit_config["site"]["depth"]
+            != config.greenheart_config["site"]["depth"]
+        ):
             config.orbit_config["site"].update(
                 {"depth": config.greenheart_config["site"]["depth"]}
             )
-            warnings.warn(f"site depth in the orbit_config was {config.orbit_config['site']['depth']}, but site depth in" 
-                    f"greenheart_config was {config.greenheart_config['site']['depth']}. The site depth value in the orbit_config"
-                    "is being overwritten with the value from the greenheart_config", UserWarning)
-            
-        if config.orbit_config["plant"]["turbine_spacing"] != config.greenheart_config["site"]["wind_layout"]["turbine_spacing"]:
+            warnings.warn(
+                f"site depth in the orbit_config was {config.orbit_config['site']['depth']}, but site depth in"
+                f"greenheart_config was {config.greenheart_config['site']['depth']}. The site depth value in the orbit_config"
+                "is being overwritten with the value from the greenheart_config",
+                UserWarning,
+            )
+
+        if (
+            config.orbit_config["plant"]["turbine_spacing"] 
+            != config.greenheart_config["site"]["wind_layout"]["turbine_spacing"]
+        ):
             config.orbit_config["plant"].update(
                 {"turbine_spacing": config.greenheart_config["site"]["wind_layout"]["turbine_spacing"]}
             )
@@ -263,13 +284,23 @@ def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
                     f"greenheart_config was {config.greenheart_config['site']['wind_layout']['turbine_spacing']}. The 'turbine_spacing' value in the orbit_config"
                     "is being overwritten with the value from the greenheart_config", UserWarning)
             
-        if config.orbit_config["plant"]["row_spacing"] != config.greenheart_config["site"]["wind_layout"]["row_spacing"]:
+        if (
+            config.orbit_config["plant"]["row_spacing"]
+            != config.greenheart_config["site"]["wind_layout"]["row_spacing"]
+        ):
             config.orbit_config["plant"].update(
-                {"row_spacing": config.greenheart_config["site"]["wind_layout"]["row_spacing"]}
+                {
+                    "row_spacing": config.greenheart_config["site"]["wind_layout"][
+                        "row_spacing"
+                    ]
+                }
             )
-            warnings.warn(f"site depth in the orbit_config was {config.orbit_config['plant']['row_spacing']}, but 'row_spacing' in" 
-                    f"greenheart_config was {config.greenheart_config['site']['wind_layout']['row_spacing']}. The 'row_spacing' value in the orbit_config"
-                    "is being overwritten with the value from the greenheart_config", UserWarning)
+            warnings.warn(
+                f"'row_spacing' in the orbit_config was {config.orbit_config['plant']['row_spacing']}, but 'row_spacing' in"
+                f"greenheart_config was {config.greenheart_config['site']['wind_layout']['row_spacing']}. The 'row_spacing' value in the orbit_config"
+                "is being overwritten with the value from the greenheart_config",
+                UserWarning,
+            )
 
         wind_config = he_fin.WindCostConfig(
             design_scenario=config.design_scenario,
@@ -368,7 +399,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
             hopp_config=config.hopp_config,
             greenheart_config=config.greenheart_config,
             turbine_config=config.turbine_config,
-            hopp_interface=hopp_results["hopp_interface"]
+            hopp_interface=hopp_results["hopp_interface"],
         )
 
         wind_cost_results = he_fin.run_wind_cost_model(
@@ -457,13 +488,14 @@ def run_simulation(config: GreenHeartSimulationConfig):
         )
 
         # compressor #TODO size correctly
-        h2_transport_compressor, h2_transport_compressor_results = (
-            he_h2.run_h2_transport_compressor(
-                config.greenheart_config,
-                electrolyzer_physics_results,
-                design_scenario,
-                verbose=verbose,
-            )
+        (
+            h2_transport_compressor,
+            h2_transport_compressor_results,
+        ) = he_h2.run_h2_transport_compressor(
+            config.greenheart_config,
+            electrolyzer_physics_results,
+            design_scenario,
+            verbose=verbose,
         )
 
         # transport pipeline
@@ -785,45 +817,50 @@ def run_simulation(config: GreenHeartSimulationConfig):
         ]
 
         if "steel" in config.greenheart_config:
+            steel_config = copy.deepcopy(config.greenheart_config)
             if config.verbose:
                 print("Running steel\n")
 
             # use lcoh from the electrolyzer model if it is not already in the config
-            if "lcoh" not in config.greenheart_config["steel"]["finances"]:
-                config.greenheart_config["steel"]["finances"]["lcoh"] = lcoh
+            if "lcoh" not in steel_config["steel"]["finances"]:
+                steel_config["steel"]["finances"]["lcoh"] = lcoh
 
             # use lcoh from the electrolyzer model if it is not already in the config
-            if "lcoh" not in config.greenheart_config["steel"]["costs"]:
-                config.greenheart_config["steel"]["costs"]["lcoh"] = lcoh
+            if "lcoh" not in steel_config["steel"]["costs"]:
+                steel_config["steel"]["costs"]["lcoh"] = lcoh
 
             # use the hydrogen amount from the electrolyzer physics model if it is not already in the config
             if (
                 "hydrogen_amount_kgpy"
-                not in config.greenheart_config["steel"]["capacity"]
+                not in steel_config["steel"]["capacity"]
             ):
-                config.greenheart_config["steel"]["capacity"][
+                steel_config["steel"]["capacity"][
                     "hydrogen_amount_kgpy"
                 ] = hydrogen_amount_kgpy
 
-            steel_capacity, steel_costs, steel_finance = run_steel_full_model(config.greenheart_config, save_plots=config.save_plots, show_plots=config.show_plots, output_dir=config.output_dir, design_scenario_id=config.design_scenario["id"])
+            steel_capacity, steel_costs, steel_finance = run_steel_full_model(steel_config, save_plots=config.save_plots, show_plots=config.show_plots, output_dir=config.output_dir, design_scenario_id=config.design_scenario["id"])
 
         else:
             steel_finance = {}
 
         if "ammonia" in config.greenheart_config:
+            ammonia_config = copy.deepcopy(config.greenheart_config)
             if config.verbose:
                 print("Running ammonia\n")
+
+            if "hydrogen_cost" not in ammonia_config['ammonia']['costs']['feedstocks']:
+                ammonia_config['ammonia']['costs']['feedstocks']['hydrogen_cost'] = lcoh
 
             # use the hydrogen amount from the electrolyzer physics model if it is not already in the config
             if (
                 "hydrogen_amount_kgpy"
-                not in config.greenheart_config["ammonia"]["capacity"]
+                not in ammonia_config["ammonia"]["capacity"]
             ):
-                config.greenheart_config["ammonia"]["capacity"][
+                ammonia_config["ammonia"]["capacity"][
                     "hydrogen_amount_kgpy"
                 ] = hydrogen_amount_kgpy
 
-            ammonia_capacity, ammonia_costs, ammonia_finance = run_ammonia_full_model(config.greenheart_config, save_plots=config.save_plots, show_plots=config.show_plots, output_dir=config.output_dir, design_scenario_id=config.design_scenario["id"])
+            ammonia_capacity, ammonia_costs, ammonia_finance = run_ammonia_full_model(ammonia_config, save_plots=config.save_plots, show_plots=config.show_plots, output_dir=config.output_dir, design_scenario_id=config.design_scenario["id"])
         
         else:
             ammonia_finance = {}
@@ -916,7 +953,13 @@ def run_simulation(config: GreenHeartSimulationConfig):
             platform_results = platform_results
         )
 
-def run_sweeps(simulate=False, verbose=True, show_plots=True, use_profast=True, output_dir="output/"):
+def run_sweeps(
+    simulate=False,
+    verbose=True,
+    show_plots=True,
+    use_profast=True,
+    output_dir="output/",
+):
 
     if simulate:
         verbose = False
@@ -942,7 +985,8 @@ def run_sweeps(simulate=False, verbose=True, show_plots=True, use_profast=True, 
                     )
                     print(lcoh_array)
                 np.savetxt(
-                    output_dir + "data/lcoh_vs_rating_%s_storage_%sMWwindplant.txt"
+                    output_dir
+                    + "data/lcoh_vs_rating_%s_storage_%sMWwindplant.txt"
                     % (storage_type, wind_rating),
                     np.c_[ratings, lcoh_array],
                 )
@@ -1033,7 +1077,11 @@ def run_sweeps(simulate=False, verbose=True, show_plots=True, use_profast=True, 
 
 
 def run_policy_options_storage_types(
-    verbose=True, show_plots=False, save_plots=False, use_profast=True, output_dir="output/"
+    verbose=True,
+    show_plots=False,
+    save_plots=False,
+    use_profast=True,
+    output_dir="output/",
 ):
 
     storage_types = ["pressure_vessel", "pipe", "salt_cavern", "none"]
@@ -1066,7 +1114,11 @@ def run_policy_options_storage_types(
 
 
 def run_policy_storage_design_options(
-    verbose=False, show_plots=False, save_plots=False, use_profast=True, output_dir="output/"
+    verbose=False,
+    show_plots=False,
+    save_plots=False,
+    use_profast=True,
+    output_dir="output/",
 ):
 
     design_scenarios = [1, 2, 3, 4, 5, 6, 7]
@@ -1156,7 +1208,11 @@ def run_policy_storage_design_options(
 
 
 def run_design_options(
-    verbose=False, show_plots=False, save_plots=False, incentive_option=1, output_dir="output/"
+    verbose=False,
+    show_plots=False,
+    save_plots=False,
+    incentive_option=1,
+    output_dir="output/",
 ):
 
     design_options = range(1, 8)  # 8
@@ -1232,7 +1288,7 @@ def run_storage_options(output_dir="output/"):
             storage_type=storage_type,
             output_level=4,
             grid_connection=False,
-            output_dir=output_dir
+            output_dir=output_dir,
         )
         lcoe_list.append(lcoe)
         lcoh_list.append(lcoh)
@@ -1248,7 +1304,7 @@ def run_storage_options(output_dir="output/"):
             storage_type=storage_type,
             output_level=4,
             grid_connection=True,
-            output_dir=output_dir
+            output_dir=output_dir,
         )
         lcoh_with_grid_list.append(lcoh_with_grid)
         lcoh_grid_only_list.append(lcoh_grid_only)
