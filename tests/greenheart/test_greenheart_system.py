@@ -167,7 +167,7 @@ def test_simulation_wind_wave_solar(subtests):
     # prior to 20240207 value was approx(10.823798551850347)
     # TODO base this test value on something. Currently just based on output at writing.
     with subtests.test("lcoh"):
-        assert lcoh == approx(12.71510378132601, rel=rtol)
+        assert lcoh == approx(12.715103781326011, rel=rtol)
 
     # prior to 20240207 value was approx(0.11035426429749774)
     # TODO base this test value on something. Currently just based on output at writing.
@@ -366,3 +366,53 @@ def test_simulation_wind_battery_pv_onshore_steel_ammonia(subtests):
         
         for key in greenheart_output.hourly_energy_breakdown.keys():
             assert len(greenheart_output.hourly_energy_breakdown[key]) == expected_length
+
+def test_simulation_wind_onshore_steel_ammonia_ss_h2storage(subtests):
+
+    config = GreenHeartSimulationConfig(
+        filename_hopp_config=filename_hopp_config,
+        filename_greenheart_config=filename_greenheart_config_onshore,
+        filename_turbine_config=filename_turbine_config,
+        filename_floris_config=filename_floris_config,
+        verbose=False,
+        show_plots=False,
+        save_plots=True,
+        output_dir=os.path.abspath(pathlib.Path(__file__).parent.resolve()) + "/output/",
+        use_profast=True,
+        post_processing=True,
+        incentive_option=1,
+        plant_design_scenario=9,
+        output_level=7,
+    )
+
+    config.greenheart_config['h2_storage']['size_capacity_from_demand']['flag'] = True
+    config.greenheart_config['h2_storage']['type'] = 'pipe'
+    
+    # based on 2023 ATB moderate case for onshore wind
+    config.hopp_config["config"]["cost_info"]["wind_installed_cost_mw"] = 1434000.0 
+    # based on 2023 ATB moderate case for onshore wind
+    config.hopp_config["config"]["cost_info"]["wind_om_per_kw"] = 29.567
+    config.hopp_config["technologies"]["wind"]["fin_model"]["system_costs"]["om_fixed"][0] = config.hopp_config["config"]["cost_info"]["wind_om_per_kw"]
+    # set skip_financial to false for onshore wind
+    config.hopp_config["config"]["simulation_options"]["wind"]["skip_financial"] = False
+    lcoe, lcoh, steel_finance, ammonia_finance = run_simulation(config)
+
+    # TODO base this test value on something
+    with subtests.test("lcoh"):
+        assert lcoh == approx(10.0064010897151, rel=rtol)
+
+    # TODO base this test value on something
+    with subtests.test("lcoe"):
+        assert lcoe == approx(0.03486192934806013, rel=rtol)
+
+    # TODO base this test value on something
+    with subtests.test("steel_finance"):
+        lcos_expected = 1812.985744428756 
+
+        assert steel_finance.sol.get("price") == approx(lcos_expected, rel=rtol)
+
+    # TODO base this test value on something
+    with subtests.test("ammonia_finance"):
+        lcoa_expected = 1.0419096226034346
+
+        assert ammonia_finance.sol.get("price") == approx(lcoa_expected, rel=rtol)
