@@ -484,7 +484,7 @@ def test_hybrid_pv_only_custom_fin(hybrid_config, subtests):
     hi = HoppInterface(hybrid_config)
 
     hybrid_plant = hi.system
-    hybrid_plant.set_om_costs(pv_om_per_kw=20)
+    hybrid_plant.set_om_costs_per_kw(pv_om_per_kw=20)
 
     hi.simulate()
 
@@ -504,7 +504,6 @@ def test_hybrid_pv_only_custom_fin(hybrid_config, subtests):
     with subtests.test("aep"):
         assert aeps.pv == approx(9884106.55, 1e-3)
         assert aeps.hybrid == aeps.pv
-
 
 def test_hybrid_pv_battery_custom_fin(hybrid_config, subtests):
     tech = {
@@ -589,7 +588,6 @@ def test_hybrid_pv_battery_custom_fin(hybrid_config, subtests):
 
     with subtests.test("battery om cost"):
         assert hybrid_plant.battery.om_capacity == (30,)
-
 
 def test_detailed_pv_system_capacity(hybrid_config, subtests):
     with subtests.test(
