@@ -23,6 +23,8 @@ from hopp.simulation.technologies.dispatch import plot_tools
 
 from .finance import adjust_orbit_costs
 
+import datetime as dt
+
 """
 This function returns the ceiling of a/b (rounded to the nearest greater integer). 
 The function was copied from https://stackoverflow.com/a/17511341/5128616
@@ -412,7 +414,7 @@ def visualize_plant(
     onshorey = 50
 
     wind_buffer = np.min(turbine_x) - (
-        onshorey + 2 * rotor_diameter + electrolyzer_side
+        onshorey + 6 * rotor_diameter + electrolyzer_side
     )
     if "pv" in hopp_config["technologies"].keys():
         wind_buffer -= np.sqrt(hopp_results["hybrid_plant"].pv.footprint_area)
@@ -636,14 +638,37 @@ def visualize_plant(
 
         component_areas['equipment_platform_area_m2'] = equipment_platform_area
 
+    ## add onshore substation
+    if (
+        design_scenario["transportation"] == "hvdc"
+        or design_scenario["transportation"] == "hvdc+pipeline"
+    ):
+        onshore_substation_y = onshorey - onshore_substation_y_side_length * 1.2
+        onshore_substation_x = onshorex + 0.2 * onshore_substation_y_side_length
+        onshore_substation_patch00 = patches.Rectangle(
+            (
+                onshore_substation_x,
+                onshore_substation_y,
+            ),
+            onshore_substation_x_side_length,
+            onshore_substation_y_side_length,
+            fill=True,
+            color=substation_color,
+            label="Substation*",
+            zorder=11,
+        )
+        ax[0, 0].add_patch(onshore_substation_patch00)
+
+        component_areas['onshore_substation_area_m2'] = onshore_substation_area
+    
     ## add hvdc cable
     if (
         design_scenario["transportation"] == "hvdc"
         or design_scenario["transportation"] == "hvdc+pipeline"
     ):
         ax[0, 0].plot(
-            [onshorex + onshore_substation_x_side_length, 1000],
-            [48, 48],
+            [onshorex + onshore_substation_x_side_length, 200*(electrolyzer_side)],
+            [onshore_substation_y, onshore_substation_y],
             "--",
             color=cable_color,
             label="HVDC Cable",
@@ -664,28 +689,7 @@ def visualize_plant(
             label="HVDC Cable",
             zorder=0,
         )
-
-    ## add onshore substation
-    if (
-        design_scenario["transportation"] == "hvdc"
-        or design_scenario["transportation"] == "hvdc+pipeline"
-    ):
-        onshore_substation_patch00 = patches.Rectangle(
-            (
-                onshorex + 0.2 * onshore_substation_y_side_length,
-                onshorey - onshore_substation_y_side_length * 1.2,
-            ),
-            onshore_substation_x_side_length,
-            onshore_substation_y_side_length,
-            fill=True,
-            color=substation_color,
-            label="Substation*",
-            zorder=11,
-        )
-        ax[0, 0].add_patch(onshore_substation_patch00)
-
-        component_areas['onshore_substation_area_m2'] = onshore_substation_area
-
+            
     ## add transport pipeline
     if design_scenario["transportation"] == "colocated":
         # add hydrogen pipeline to end use
@@ -1214,10 +1218,11 @@ def visualize_plant(
             xlim=[
                 round(np.min(onshorex - 100), ndigits=roundto),
                 round(
-                    np.max(
+                    1.4*np.max(
                         onshorex
                         + onshore_substation_x_side_length
                         + electrolyzer_side
+                        + solar_side_x
                         + 200
                     ),
                     ndigits=roundto,
@@ -1226,7 +1231,7 @@ def visualize_plant(
             ylim=[
                 round(np.min(onshorey - 100), ndigits=roundto),
                 round(
-                    np.max(
+                    1.2*np.max(
                         onshorey
                         + battery_side_y
                         + electrolyzer_side
@@ -1238,6 +1243,7 @@ def visualize_plant(
             ],
         )
         ax[ax_index_plant].set(aspect="equal")
+        
     else:
         roundto = -3
         ax[ax_index_plant].set(
@@ -1247,7 +1253,7 @@ def visualize_plant(
             ],
             ylim=[
                 round(np.min(onshorey - 1000), ndigits=roundto),
-                round(np.max(turbine_y + 4000), ndigits=roundto),
+                round(np.max(turbine_y + 8000), ndigits=roundto),
             ],
         )
         ax[ax_index_plant].autoscale()
@@ -1342,10 +1348,16 @@ def visualize_plant(
         ]
     else:
         labels = ["(a) Full plant", "(b) Non-wind plant detail"]
+
     for axi, label in zip(ax.flatten(), labels):
-        axi.legend(frameon=False, ncol=2)  # , ncol=2, loc="best")
+        ncol = 2
+        if design_scenario["wind_location"] == "offshore":
+            ncol = 1
+        axi.legend(frameon=False, ncol=ncol)  # , ncol=2, loc="best")
         axi.set(xlabel="Easting (m)", ylabel="Northing (m)")
         axi.set_title(label, loc="left")
+        axi.xaxis.set_major_locator(plt.MaxNLocator(5))
+        axi.yaxis.set_major_locator(plt.MaxNLocator(5))
         # axi.spines[['right', 'top']].set_visible(False)
 
     ## save the plot
@@ -1403,12 +1415,12 @@ def save_energy_flows(
         )
         output.update({"wave generation [kW]": wave_plant_power})
     if hybrid_plant.battery:
-        battery_power_out_mw = hybrid_plant.battery.outputs.P 
-        output.update({"battery discharge [kW]": [(int(p>0))*p*1E3 for p in battery_power_out_mw]}) # convert from MW to kW and extract only discharging
-        output.update({"battery charge [kW]": [-(int(p<0))*p*1E3 for p in battery_power_out_mw]}) # convert from MW to kW and extract only charging
+        battery_power_out_kw = hybrid_plant.battery.outputs.P 
+        output.update({"battery discharge [kW]": [(int(p>0))*p for p in battery_power_out_kw]}) # convert from MW to kW and extract only discharging
+        output.update({"battery charge [kW]": [-(int(p<0))*p for p in battery_power_out_kw]}) # convert from MW to kW and extract only charging
         output.update({"battery state of charge [%]": hybrid_plant.battery.outputs.dispatch_SOC})
-
-    output.update({"total renewable energy production hourly [kW]": [solver_results[0]]*simulation_length})
+    import pdb; pdb.set_trace()
+    output.update({"total renewable energy production hourly [kW]": hybrid_plant.grid.generation_profile[0:simulation_length]})
     output.update({"grid energy usage hourly [kW]": [solver_results[1]]*simulation_length})
     output.update({"desal energy hourly [kW]": [solver_results[2]]*simulation_length})
     output.update({"electrolyzer energy hourly [kW]": electrolyzer_physics_results["power_to_electrolyzer_kw"]})
