@@ -1416,11 +1416,12 @@ def save_energy_flows(
         output.update({"wave generation [kW]": wave_plant_power})
     if hybrid_plant.battery:
         battery_power_out_kw = hybrid_plant.battery.outputs.P 
-        output.update({"battery discharge [kW]": [(int(p>0))*p for p in battery_power_out_kw]}) # convert from MW to kW and extract only discharging
-        output.update({"battery charge [kW]": [-(int(p<0))*p for p in battery_power_out_kw]}) # convert from MW to kW and extract only charging
+        output.update({"battery discharge [kW]": [(int(p>0))*p for p in battery_power_out_kw]}) # extract only discharging
+        output.update({"battery charge [kW]": [-(int(p<0))*p for p in battery_power_out_kw]}) # extract only charging
         output.update({"battery state of charge [%]": hybrid_plant.battery.outputs.dispatch_SOC})
-    import pdb; pdb.set_trace()
-    output.update({"total renewable energy production hourly [kW]": hybrid_plant.grid.generation_profile[0:simulation_length]})
+        
+    output.update({"total renewable production hourly [kW]": hybrid_plant.grid.generation_profile[0:simulation_length]})
+    output.update({"total renewable production curtailed hourly [kW]": hybrid_plant.grid.schedule_curtailed[0:simulation_length]})
     output.update({"grid energy usage hourly [kW]": [solver_results[1]]*simulation_length})
     output.update({"desal energy hourly [kW]": [solver_results[2]]*simulation_length})
     output.update({"electrolyzer energy hourly [kW]": electrolyzer_physics_results["power_to_electrolyzer_kw"]})
