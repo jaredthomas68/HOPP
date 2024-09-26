@@ -4,10 +4,13 @@ from typing import Optional, Union
 import warnings
 import numpy as np
 import pandas as pd
-from attrs import define, field
-import copy
-
 pd.options.mode.chained_assignment = None  # default='warn'
+from attrs import define, field, asdict
+import copy
+import csv
+import json
+import yaml
+yaml.add_representer(np.ndarray, lambda dumper, data: dumper.represent_list(data.tolist()))
 
 from hopp.simulation import HoppInterface
 from ProFAST import ProFAST
@@ -182,7 +185,7 @@ class GreenHeartSimulationOutput:
         hopp_interface (HoppInterface): the hopp interface created and used by GreenHEART in the simulation
         profast_lcoe (ProFAST): the profast instance used for the lcoe calculations
         profast_lcoh (ProFAST): the profast instance used for the lcoh calculations
-        profast_lcoh (ProFAST): the profast instance used for the lcoh calculations if  hydrogen were produced only from the grid
+        profast_lcoh_grid_only (ProFAST): the profast instance used for the lcoh calculations if  hydrogen were produced only from the grid
         lcoe (float): levelized cost of energy (electricity)
         lcoh (float): levelized cost of hydrogen
         lcoh_grid_only (float): levelized cost of hydrogen if produced only from the grid
@@ -192,7 +195,7 @@ class GreenHeartSimulationOutput:
         opex_breakdown_annual (dict): annual operational expenditures broken down by technology
         annual_energy_breakdown (dict): annual energy generation and usage broken down by technology
         hourly_energy_breakdown (dict): hourly energy generation and usage broken down by technology
-        remaining_power_profile (np.ndarray): unused power (hourly)
+        remaining_power_profile (list): unused power (hourly)
         steel_capacity (Optional[SteelCapacityModelOutputs]): steel capacity information
         steel_costs (Optional[SteelCostModelOutputs]): steel cost information
         steel_finance (Optional[SteelFinanceModelOutputs]): steel financial information
@@ -223,7 +226,7 @@ class GreenHeartSimulationOutput:
     opex_breakdown_annual: dict
     annual_energy_breakdown: dict
     hourly_energy_breakdown: dict
-    remaining_power_profile: np.ndarray
+    remaining_power_profile: list
 
     # optional outputs
     h2_storage_max_fill_rate_kg_hr: Optional[dict] = field(default=None)
@@ -240,6 +243,104 @@ class GreenHeartSimulationOutput:
 
     platform_results: Optional[dict] = field(default=None)
 
+    def save_capacities(file_path):
+
+        return 0
+        
+    def save(self, file_path):
+            
+        def convert_numpy(d):
+            if isinstance(d, dict):
+                return {key: convert_numpy(value) for key, value in d.items()}
+            elif isinstance(d, list):
+                return [convert_numpy(item) for item in d]
+            elif isinstance(d, np.ndarray):
+                return d.tolist()  # Convert ndarray to list
+            elif isinstance(d, np.matrix):
+                return d.tolist()  # Convert matrix to list
+            elif isinstance(d, (np.integer, np.unsignedinteger)):
+                return int(d)  # Convert NumPy integers to Python int
+            elif isinstance(d, np.floating):
+                return float(d)  # Convert NumPy floats to Python float
+            elif isinstance(d, np.complex_):
+                return complex(d)  # Convert NumPy complex numbers to Python complex
+            elif isinstance(d, np.bool_):
+                return bool(d)  # Convert NumPy booleans to Python bool
+            elif isinstance(d, np.datetime64):
+                return str(d)  # Convert NumPy datetime64 to ISO string
+            elif isinstance(d, np.timedelta64):
+                return str(d)  # Convert NumPy timedelta64 to string (e.g., '7 days')
+            elif isinstance(d, np.dtype):
+                return str(d)  # Convert NumPy dtype to string
+            elif isinstance(d, (np.str_, np.bytes_)):
+                return str(d)  # Convert NumPy strings and bytes to Python str
+            elif isinstance(d, np.object_):
+                return convert_numpy(d.item())  # Recursively handle object dtype
+            else:
+                return d  # Return other types unchanged
+
+        # Register NumPy representers for PyYAML if needed (but conversion beforehand is better)
+        yaml.add_representer(np.ndarray, lambda dumper, data: dumper.represent_list(data.tolist()))
+        yaml.add_representer(np.integer, lambda dumper, data: dumper.represent_int(int(data)))
+        yaml.add_representer(np.floating, lambda dumper, data: dumper.represent_float(float(data)))
+        yaml.add_representer(np.bool_, lambda dumper, data: dumper.represent_bool(bool(data)))
+
+        def check_dict_types(d, level=0):
+            for key, value in d.items():
+                # Print key and its type
+                print(f"{'  '*level}Level {level} Key: '{key}', Type: {type(key)}")
+                
+                # Check the value type
+                if isinstance(value, dict):
+                    print(f"{'  '*level}Level {level} Value: Dictionary")
+                    # Recursively check nested dictionaries
+                    check_dict_types(value, level+1)
+                else:
+                    # Print value and its type if it's not a dictionary
+                    print(f"{'  '*level}Level {level} Value: {value}, Type: {type(value)}")
+
+        def convert_profast(pf_obj):
+            obj_dict = {
+                'vals': copy.deepcopy(pf_obj.vals),
+                'feedstocks': copy.deepcopy(pf_obj.feedstocks),
+                'coproducts': copy.deepcopy(pf_obj.coproducts),
+                'fixed_costs': copy.deepcopy(pf_obj.fixed_costs),
+                'capital_items': copy.deepcopy(pf_obj.capital_items),
+                'incentives': copy.deepcopy(pf_obj.incentives),
+                # 'defaults': dict(copy.deepcopy(pf_obj.val_names)),
+                'solve_price': pf_obj.solve_price(),
+                'cash_flow': pf_obj.cash_flow(),
+            }
+
+            return obj_dict
+        
+        # Convert the object to a dictionary, including nested objects
+        data = {
+            **asdict(self),
+            "greenheart_config": asdict(self.greenheart_config),  # Handle the nested object
+            # "hopp_interface": asdict(self.hopp_interface),  # Handle the nested object
+            "profast_lcoe": convert_profast(self.profast_lcoe),  # Handle the nested object
+            "profast_lcoh": convert_profast(self.profast_lcoh),  # Handle the nested object
+            "profast_lcoh_grid_only": convert_profast(self.profast_lcoh_grid_only),  # Handle the nested object
+        }
+        
+        if self.ammonia_capacity:
+            data["ammonia_capacity"] = {**asdict(self.ammonia_capacity), "hydrogen_amount_kgpy": self.ammonia_capacity.hydrogen_amount_kgpy, "ammonia_plant_capacity_kgpy": self.ammonia_capacity.ammonia_plant_capacity_kgpy},  # Handle the nested object
+            data["ammonia_costs"] = asdict(self.ammonia_costs),  # Handle the nested object
+            data["ammonia_finance"] = asdict(self.ammonia_finance),  # Handle the nested object
+        
+        if self. steel_capacity:
+            data["steel_capacity"] = asdict(self.steel_capacity),  # Handle the nested object
+            data["steel_costs"] = asdict(self.steel_costs),  # Handle the nested object
+            data["steel_finance"] = asdict(self.steel_finance),  # Handle the nested object
+        
+        # remove things we have not converted for output yet
+        data.pop("hopp_interface")
+        data["hopp_results"].pop("hopp_interface")
+        data["hopp_results"].pop("hybrid_plant")
+        
+        with open(file_path, 'w') as file:
+            yaml.dump(convert_numpy(data), file)
 
 def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
 
@@ -1084,7 +1185,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
     elif config.output_level == 7:
         return lcoe, lcoh, steel_finance, ammonia_finance
     elif config.output_level == 8:
-        return GreenHeartSimulationOutput(
+        output_object = GreenHeartSimulationOutput(
             config,
             hi,
             pf_lcoe,
@@ -1099,7 +1200,7 @@ def run_simulation(config: GreenHeartSimulationConfig):
             opex_breakdown_annual,
             annual_energy_breakdown,
             hourly_energy_breakdown,
-            remaining_power_profile,
+            list(remaining_power_profile),
             h2_storage_max_fill_rate_kg_hr=(
                 None
                 if "h2_storage_max_fill_rate_kg_hr" not in h2_storage_results
@@ -1135,7 +1236,11 @@ def run_simulation(config: GreenHeartSimulationConfig):
             ),
             platform_results=platform_results,
         )
+        if config.post_processing:
+            output_object.save("./output/data/greenheart_output.yaml")
 
+
+        return output_object
 
 def run_sweeps(
     simulate=False,

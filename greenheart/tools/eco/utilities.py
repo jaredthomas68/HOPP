@@ -1420,14 +1420,16 @@ def save_energy_flows(
         output.update({"battery charge [kW]": [-(int(p<0))*p for p in battery_power_out_kw]}) # extract only charging
         output.update({"battery state of charge [%]": hybrid_plant.battery.outputs.dispatch_SOC})
         
-    output.update({"total renewable production hourly [kW]": hybrid_plant.grid.generation_profile[0:simulation_length]})
-    output.update({"total renewable production curtailed hourly [kW]": hybrid_plant.grid.schedule_curtailed[0:simulation_length]})
+    output.update({"generation hourly [kW]": hybrid_plant.grid.generation_profile[0:simulation_length]})
+    output.update({"generation curtailed hourly [kW]": hybrid_plant.grid.schedule_curtailed[0:simulation_length]})
     output.update({"grid energy usage hourly [kW]": [solver_results[1]]*simulation_length})
     output.update({"desal energy hourly [kW]": [solver_results[2]]*simulation_length})
     output.update({"electrolyzer energy hourly [kW]": electrolyzer_physics_results["power_to_electrolyzer_kw"]})
     output.update({"transport compressor energy hourly [kW]": [solver_results[3]]*simulation_length})
     output.update({"storage energy hourly [kW]": [solver_results[4]]*simulation_length})
     output.update({"h2 production hourly [kg]": electrolyzer_physics_results["H2_Results"]["Hydrogen Hourly Production [kg/hr]"]})
+    if hybrid_plant.site.follow_desired_schedule:
+        output.update({"desired schedule [kW]": [p*1E3 for p in hybrid_plant.site.desired_schedule[0:simulation_length]]})
     if "hydrogen_storage_soc" in h2_storage_results:
         output.update({"hydrogen storage SOC [kg]": h2_storage_results["hydrogen_storage_soc"]})
     
@@ -1442,7 +1444,38 @@ def save_energy_flows(
 
     return output
 
+# def save_general_system_information(lcoh, 
+#                                     lcoe, 
+#                                     pf_lcoh, 
+#                                     pf_lcoe, 
+#                                     hopp_results, 
+#                                     electrolyzer_physics_results, 
+#                                     hopp_config, 
+#                                     greenheart_config, 
+#                                     h2_storage_results, 
+#                                     capex_breakdown, 
+#                                     opex_breakdown, 
+#                                     incentive_option,
+#                                     design_scenario,
+#                                     output_dir="./output/"):
+    
+#     data = {}
 
+#     # plant component ratings
+#     for technology_key in hopp_config["technologies"].keys():
+#         if technology_key == "wind":
+#             data[hopp_config["technologies"][technology_key]["*kw*"]]
+#     # production values annual
+
+#     # plant component locations
+
+#     # capex
+
+#     # opex
+
+#     # levelized costs
+
+#     return 
 # set up function to post-process HOPP results
 def post_process_simulation(
     lcoe,
@@ -1708,5 +1741,8 @@ def post_process_simulation(
         electrolyzer_physics_results["H2_Results"][key],
         header="# " + key
     )
+
+    # save general information
+    # save_general_plant_information()
 
     return annual_energy_breakdown, hourly_energy_breakdown
