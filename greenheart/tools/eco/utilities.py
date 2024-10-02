@@ -21,7 +21,7 @@ from hopp.utilities import load_yaml
 
 from hopp.simulation.technologies.dispatch import plot_tools
 
-from .finance import adjust_orbit_costs
+from .finance import adjust_orbit_costs, WindCostOutputs
 
 import datetime as dt
 
@@ -1478,6 +1478,15 @@ def save_energy_flows(
 #     # levelized costs
 
 #     return 
+
+def save_cable_usage(wind_cost_results: WindCostOutputs):
+
+    if WindCostOutputs.orbit_project:
+        op = WindCostOutputs.orbit_project
+        import pdb; pdb.set_trace()
+
+
+    return 0
 # set up function to post-process HOPP results
 def post_process_simulation(
     lcoe,
@@ -1696,6 +1705,8 @@ def post_process_simulation(
                 greenheart_config["h2_storage"]["type"],
             )
         )
+
+    # save_cable_usage(wind_cost_results=wind_cost_results)
 
     ##################################################################################
     if (

@@ -243,9 +243,9 @@ class GreenHeartSimulationOutput:
 
     platform_results: Optional[dict] = field(default=None)
 
-    def save_capacities(file_path):
+    # def save_capacities(file_path):
 
-        return 0
+    #     return 0
         
     def save(self, file_path):
             
