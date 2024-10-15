@@ -278,6 +278,32 @@ class GreenHeartSimulationOutput:
                 return convert_numpy(d.item())  # Recursively handle object dtype
             else:
                 return d  # Return other types unchanged
+            
+        def convert_numpy_and_pandas_to_yaml_compatible(data):
+            if isinstance(data, np.ndarray):
+                # Convert NumPy arrays to lists
+                return data.tolist()
+            elif isinstance(data, np.generic):
+                # Convert NumPy scalars to Python scalars (int, float, etc.)
+                return data.item()
+            elif isinstance(data, pd.DataFrame):
+                # Convert DataFrame to a list of dictionaries (records)
+                return data.to_dict(orient='records')
+            elif isinstance(data, pd.Series):
+                # Convert Series to a list
+                return data.tolist()
+            elif isinstance(data, dict):
+                # Recursively process dictionary values
+                return {key: convert_numpy_and_pandas_to_yaml_compatible(value) for key, value in data.items()}
+            elif isinstance(data, list):
+                # Recursively process lists
+                return [convert_numpy_and_pandas_to_yaml_compatible(item) for item in data]
+            elif isinstance(data, tuple):
+                # Recursively process tuples
+                return tuple(convert_numpy_and_pandas_to_yaml_compatible(item) for item in data)
+            else:
+                # Return non-NumPy, non-Pandas types as-is
+                return data
 
         # Register NumPy representers for PyYAML if needed (but conversion beforehand is better)
         yaml.add_representer(np.ndarray, lambda dumper, data: dumper.represent_list(data.tolist()))
@@ -329,17 +355,23 @@ class GreenHeartSimulationOutput:
             data["ammonia_costs"] = asdict(self.ammonia_costs),  # Handle the nested object
             data["ammonia_finance"] = asdict(self.ammonia_finance),  # Handle the nested object
         
-        if self. steel_capacity:
+        if self.steel_capacity:
             data["steel_capacity"] = asdict(self.steel_capacity),  # Handle the nested object
             data["steel_costs"] = asdict(self.steel_costs),  # Handle the nested object
             data["steel_finance"] = asdict(self.steel_finance),  # Handle the nested object
         
         # remove things we have not converted for output yet
         data.pop("hopp_interface")
-        data["hopp_results"].pop("hopp_interface")
-        data["hopp_results"].pop("hybrid_plant")
+        data.pop("hopp_results")
+        data.pop("profast_lcoe")
+        data.pop("profast_lcoh")
+        data.pop("profast_lcoh_grid_only")
+        # data["hopp_results"].pop("hopp_interface")
+        # data["hopp_results"].pop("hybrid_plant")
         
         with open(file_path, 'w') as file:
+            data = convert_numpy(data)
+            data = convert_numpy_and_pandas_to_yaml_compatible(data)
             yaml.dump(convert_numpy(data), file)
 
 def setup_greenheart_simulation(config: GreenHeartSimulationConfig):
