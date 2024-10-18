@@ -147,7 +147,7 @@ class CustomFinancialModel():
     :param fin_config: dictionary of financial parameters
     """
     def __init__(self,
-                 fin_config: dict) -> None:
+                 fin_config: dict, name) -> None:
         # super().__init__(fname, lname)
 
         # Input parameters
@@ -158,6 +158,7 @@ class CustomFinancialModel():
         self.battery_total_cost_lcos = None            # not currently used but referenced
         self.system_use_lifetime_output = 0            # Lifetime
         self.cp_capacity_credit_percent = [0]          # CapacityPayments
+        self.name = "UnnamedFinancailModel"
 
         # Input parameters within dataclasses
         if 'battery_system' in fin_config:
@@ -273,11 +274,18 @@ class CustomFinancialModel():
                     "escalation": gen_inflation,
                 }, 
             )
+            
+            if "Battery" in self.name:
+                pf.set_params(
+                    "capacity",
+                    max([1E-6, self.value("batt_annual_discharge_energy")[0]/365.0]),
+                )  # kWh/day
+            else:
+                pf.set_params(
+                    "capacity",
+                    max([1E-6, self.value("annual_energy_kwh")/365.0]),
+                )  # kWh/day
 
-            pf.set_params(
-                "capacity",
-                abs(self.value("annual_energy_kwh"))/365.0,
-            )  # kWh/day
             pf.set_params("maintenance", {"value": self.o_and_m_cost(), "escalation": gen_inflation})
 
             # pf.add_fixed_cost(
@@ -551,4 +559,5 @@ class CustomFinancialModel():
     @property
     def lcoe_nom(self) -> float:
         return self.value('levelized_cost_of_energy_nominal')
+
     
