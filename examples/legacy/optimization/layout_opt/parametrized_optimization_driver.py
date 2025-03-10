@@ -1,21 +1,21 @@
 from __future__ import annotations
 from typing import Optional, Union, Callable
 
-from hopp.tools.optimization.data_logging.data_recorder import NullRecordLogger, DataRecorder
-from hopp.tools.optimization.problem_parametrization import ProblemParametrization
-from hopp.tools.optimization.candidate_converter.object_converter import CandidateConverter, ObjectConverter
-from hopp.tools.optimization.driver.ask_tell_parallel_driver import AskTellDriver, AskTellParallelDriver
-from hopp.tools.optimization.driver.ask_tell_serial_driver import AskTellSerialDriver
-from hopp.tools.optimization.optimizer.CEM_optimizer import CEMOptimizer
-from hopp.tools.optimization.optimizer.CMA_ES_optimizer import CMAESOptimizer
-from hopp.tools.optimization.optimizer.GA_optimizer import GAOptimizer
-from hopp.tools.optimization.optimizer.SPSA_optimizer import (
+from hopp.tools.optimization.internal.data_logging.data_recorder import NullRecordLogger, DataRecorder
+from hopp.tools.optimization.internal.problem_parametrization import ProblemParametrization
+from hopp.tools.optimization.internal.candidate_converter.object_converter import CandidateConverter, ObjectConverter
+from hopp.tools.optimization.internal.driver.ask_tell_parallel_driver import AskTellDriver, AskTellParallelDriver
+from hopp.tools.optimization.internal.driver.ask_tell_serial_driver import AskTellSerialDriver
+from hopp.tools.optimization.internal.optimizer.CEM_optimizer import CEMOptimizer
+from hopp.tools.optimization.internal.optimizer.CMA_ES_optimizer import CMAESOptimizer
+from hopp.tools.optimization.internal.optimizer.GA_optimizer import GAOptimizer
+from hopp.tools.optimization.internal.optimizer.SPSA_optimizer import (
     SPSADimensionInfo,
     SPSAOptimizer,
     )
-from hopp.tools.optimization.optimizer.ask_tell_optimizer import AskTellOptimizer
-from hopp.tools.optimization.optimizer.dimension.gaussian_dimension import Gaussian
-from hopp.tools.optimization.optimizer.stationary_optimizer import StationaryOptimizer
+from hopp.tools.optimization.internal.optimizer.ask_tell_optimizer import AskTellOptimizer
+from hopp.tools.optimization.internal.optimizer.dimension.gaussian_dimension import Gaussian
+from hopp.tools.optimization.internal.optimizer.stationary_optimizer import StationaryOptimizer
 from examples.optimization.layout_opt.parametrized_optimization_problem import ParametrizedOptimizationProblem
 
 

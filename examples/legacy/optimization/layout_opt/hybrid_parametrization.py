@@ -22,7 +22,7 @@ from hopp.simulation.technologies.layout.wind_layout_tools import (
     subtract_turbine_exclusion_zone
     )
 
-from hopp.tools.optimization import (
+from hopp.tools.optimization.internal import (
     Candidate,
     ProblemParametrization
     )

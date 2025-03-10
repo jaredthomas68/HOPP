@@ -6,9 +6,9 @@ from hopp.simulation.technologies.sites import make_circular_site, make_irregula
 from hopp.simulation.hybrid_simulation import HybridSimulation
 from hopp.simulation.technologies.layout.wind_layout import WindBoundaryGridParameters
 from hopp.simulation.technologies.layout.pv_layout import PVGridParameters
-from hopp.tools.optimization import DataRecorder
-from hopp.tools.optimization.optimization_problem import OptimizationProblem
-from hopp.tools.optimization.optimization_driver import OptimizationDriver
+from hopp.tools.optimization.internal import DataRecorder
+from hopp.tools.optimization.internal.optimization_problem import OptimizationProblem
+from hopp.tools.optimization.internal.optimization_driver import OptimizationDriver
 from hopp import ROOT_DIR
 
 site = 'irregular'

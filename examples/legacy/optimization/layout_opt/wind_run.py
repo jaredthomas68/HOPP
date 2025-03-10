@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import numpy as np
 
-from hopp.tools.optimization import (
+from hopp.tools.optimization.internal import (
     setup_run,
     DataRecorder
     )

@@ -3,7 +3,7 @@ from pathlib import Path
 from collections import OrderedDict, namedtuple
 from hopp.simulation.technologies.sites import make_circular_site, make_irregular_site, SiteInfo, locations
 from hopp.simulation.hybrid_simulation import HybridSimulation
-from hopp.tools.optimization.optimization_problem import OptimizationProblem
+from hopp.tools.optimization.internal.optimization_problem import OptimizationProblem
 from hopp import ROOT_DIR
 
 site = 'irregular'

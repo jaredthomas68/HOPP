@@ -13,7 +13,7 @@ from hopp.simulation.technologies.layout.wind_layout_tools import (
     get_evenly_spaced_points_along_border,
     )
 from examples.optimization.layout_opt.parametrized_optimization_problem import ParametrizedOptimizationProblem
-from hopp.tools.optimization import (
+from hopp.tools.optimization.internal import (
     Candidate,
     ProblemParametrization
     )

@@ -30,7 +30,7 @@ from matplotlib.animation import (
     )
 from matplotlib.lines import Line2D
 
-from hopp.tools.optimization import (
+from hopp.tools.optimization.internal import (
     setup_run,
     DataRecorder
     )
