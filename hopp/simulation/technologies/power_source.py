@@ -463,6 +463,26 @@ class PowerSource(BaseClass):
             self._financial_model.value("om_batt_capacity_cost", om_capacity_per_kw)
 
     @property
+    def om_batt_capacity_cost(self):
+        """Capacity-based O&M amount [$/kWcap]"""
+        return self._financial_model.value("om_batt_capacity_cost")
+
+    @om_batt_capacity_cost.setter
+    def om_batt_capacity_cost(self, om_batt_capacity_cost: Sequence):
+        
+        self._financial_model.value("om_batt_capacity_cost", om_batt_capacity_cost)
+
+    @property
+    def om_batt_capacity_cost_kwh(self):
+        """Capacity-based O&M amount [$/kWhcap]"""
+        return self._financial_model.value("om_batt_capacity_cost_kwh")
+
+    @om_batt_capacity_cost_kwh.setter
+    def om_batt_capacity_cost_kwh(self, om_batt_capacity_cost_kwh: Sequence):
+        
+        self._financial_model.value("om_batt_capacity_cost_kwh", om_batt_capacity_cost_kwh)
+
+    @property
     def om_production(self):
         """Production-based O&M amount [$/Mwh]"""
         return self._financial_model.value("om_production")

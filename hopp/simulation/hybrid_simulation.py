@@ -348,6 +348,7 @@ class HybridSimulation(BaseClass):
                             tower_om_per_mwh=None,trough_om_per_mwh=None,
                             wave_om_per_mwh=None,tidal_om_per_mwh=None,
                             battery_om_per_mwh=None,
+                            battery_cap_om_per_kwh=None,
                             hybrid_om_per_mwh=None,):
         """
         Sets Capacity-based O&M amount for each technology [$/kWcap].
@@ -400,11 +401,13 @@ class HybridSimulation(BaseClass):
                 self.battery.om_batt_capacity_cost = battery_om_per_kw
             if battery_om_per_mwh:
                 self.battery.om_production = battery_om_per_mwh
+            if battery_cap_om_per_kwh:
+                self.battery.om_batt_capacity_cost_kwh = battery_cap_om_per_kwh
             
         if hybrid_om_per_kw:
             self.grid.om_capacity = hybrid_om_per_kw
         if hybrid_om_per_mwh:
-            self.hybrid.om_production = hybrid_om_per_mwh
+            self.grid.om_production = hybrid_om_per_mwh
 
     def size_from_reopt(self):
         """

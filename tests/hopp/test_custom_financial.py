@@ -511,3 +511,88 @@ def test_hybrid_detailed_pv_with_wind_storage_dispatch(site, subtests):
         assert npvs.wind == approx(npv_expected_wind, 1e-3)
         assert npvs.battery == approx(npv_expected_battery, 1e-3)
         assert npvs.hybrid == approx(npv_expected_hybrid, 1e-3)
+
+def test_hybrid_detailed_pv_with_wind_storage_dispatch_battery_cost_kwh(site, subtests):
+    # Test wind + detailed PV (pvsamv1) + storage with dispatch hybrid plant with custom financial model
+    annual_energy_expected_pv = 8851251
+    annual_energy_expected_wind = 31559803
+    annual_energy_expected_battery = -102220
+    annual_energy_expected_hybrid = 40308834
+    npv_expected_pv = -2194945
+    npv_expected_wind = -5274461
+    npv_expected_battery = -8181700
+    npv_expected_hybrid = -15654417
+
+    interconnect_kw = 15000
+    wind_kw = 10000
+    batt_kw = 5000
+
+    with open(pvsamv1_defaults_file, 'r') as f:
+        tech_config = json.load(f)
+
+    power_sources = {
+        'pv': {
+            'use_pvwatts': False,
+            'tech_config': tech_config,
+            'layout_params': {
+                "x_position": 0.5, 
+                "y_position": 0.5, 
+                "aspect_power": 0, 
+                "gcr": 0.5, 
+                "s_buffer": 2, 
+                "x_buffer": 2
+            },
+            'fin_model': DEFAULT_FIN_CONFIG_LOCAL,
+            'dc_degradation': [0] * 25
+        },
+        'wind': {
+            'num_turbines': 5,
+            'turbine_rating_kw': wind_kw / 5,
+            'layout_mode': 'boundarygrid',
+            'layout_params': {
+                "border_spacing": 2, 
+                "border_offset": 0.5, 
+                "grid_angle": np.rad2deg(0.5), 
+                "grid_aspect_power": 0.5, 
+                "row_phase_offset": 0.5
+            },
+            'fin_model': DEFAULT_FIN_CONFIG_LOCAL,
+        },
+        'battery': {
+            'system_capacity_kwh': batt_kw * 4,
+            'system_capacity_kw': batt_kw,
+            'fin_model': DEFAULT_FIN_CONFIG_LOCAL,
+        },
+        'grid': {
+            'interconnect_kw': interconnect_kw,
+            'fin_model': DEFAULT_FIN_CONFIG_LOCAL,
+            'ppa_price': 0.03
+        }
+    }
+    hopp_config = {
+        "site": site,
+        "technologies": power_sources
+    } 
+    hi = HoppInterface(hopp_config)
+    hybrid_plant = hi.system
+    hybrid_plant.layout.plot()
+    hybrid_plant.battery.dispatch.lifecycle_cost_per_kWh_cycle = 0.01
+    hybrid_plant.battery._financial_model.om_batt_variable_cost = [0.75]
+
+    hybrid_plant.simulate()
+
+    sizes = hybrid_plant.system_capacity_kw
+    aeps = hybrid_plant.annual_energies
+    npvs = hybrid_plant.net_present_values
+    with subtests.test("with minimal params"):
+        assert sizes.pv == approx(4993, 1e-3)
+        assert sizes.wind == approx(wind_kw, 1e-3)
+        assert sizes.battery == approx(batt_kw, 1e-3)
+        assert aeps.pv == approx(annual_energy_expected_pv, 1e-3)
+        assert aeps.wind == approx(annual_energy_expected_wind, 1e-3)
+        assert aeps.battery == approx(annual_energy_expected_battery, 1e-3)
+        assert aeps.hybrid == approx(annual_energy_expected_hybrid, 1e-3)
+        assert npvs.pv == approx(npv_expected_pv, 1e-3)
+        assert npvs.wind == approx(npv_expected_wind, 1e-3)
+        assert npvs.battery == approx(npv_expected_battery, 1e-3)
+        assert npvs.hybrid == approx(npv_expected_hybrid, 1e-3)

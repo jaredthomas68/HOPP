@@ -60,6 +60,7 @@ class SystemCosts(FinancialData):
     om_batt_fixed_cost: float = field(default=0)
     om_batt_variable_cost: float = field(default=[0])
     om_batt_capacity_cost: float = field(default=0)
+    om_batt_capacity_cost_kwh: float = field(default=0) # Not in PySAM
     om_batt_replacement_cost: float = field(default=0)
     om_replacement_cost_escal: float = field(default=0)
     total_installed_cost: float = field(default=None)
@@ -505,9 +506,14 @@ class CustomFinancialModel():
         Computes the annual O&M cost from the fixed, per capacity and per production costs
         """
         
-        return self.value('om_fixed')[0] \
+        om_cost =  self.value('om_fixed')[0] \
                + self.value('om_capacity')[0] * self.value('system_capacity') \
                + self.value('om_production')[0] * self.value('annual_energy_kwh') * 1e-3
+        
+        if "battery" in self.name:
+            om_cost += self.value('om_batt_capacity_cost_kwh')*self.value('system_capacity_kwh')
+
+        return om_cost
 
     def value(self, var_name, var_value=None):
         attr_obj = None
