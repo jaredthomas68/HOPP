@@ -1,7 +1,7 @@
 import random
 from typing import Union
 
-from hopp.tools.optimization.optimizer import DimensionInfo
+from hopp.tools.optimization.internal.optimizer import DimensionInfo
 
 
 class Bernoulli(DimensionInfo):
