@@ -4,6 +4,13 @@ import os
 import datetime
 from .model import run_hopp_model
 
+import hashlib
+from pathlib import Path
+
+import dill
+import numpy as np
+import openmdao.api as om
+
 class HoppOpenmdao(om.ExplicitComponent):
 
     def initialize(self):

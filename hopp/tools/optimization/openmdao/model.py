@@ -1,15 +1,13 @@
-from hopp.simulation import HoppInterface
+from hopp.simulation.hopp_interface import HoppInterface
+from hopp.simulation.technologies.financial.mhk_cost_model import MHKCostModelInputs
+from hopp.utilities import load_yaml
+from hopp.utilities.keys import set_nrel_key_dot_env
 from copy import deepcopy
 import numpy as np
+# Set API key
+set_nrel_key_dot_env()
 
-def run_hopp_model(
-        hopp_config, 
-        pv_rating_kw=None, 
-        wind_turbine_rating_kw=None,
-        battery_rating_kw=None, 
-        battery_rating_kwh=None, 
-        verbose=True
-        ):
+def recreate_hopp_config_for_optimization(hopp_config, pv_rating_kw=None, wind_turbine_rating_kw=None, battery_rating_kw=None, battery_rating_kwh=None):
 
     hopp_config_internal = deepcopy(hopp_config) 
     rating_tol = 50.0
@@ -77,6 +75,12 @@ def run_hopp_model(
         else:
             hopp_config_internal["technologies"]["battery"]["system_capacity_kwh"] = battery_rating_kwh
 
+    return hopp_config_internal
+
+def run_hopp_model(hopp_config, pv_rating_kw=None, wind_turbine_rating_kw=None, battery_rating_kw=None, battery_rating_kwh=None, verbose=True):
+
+    hopp_config_internal = recreate_hopp_config_for_optimization(hopp_config, pv_rating_kw, wind_turbine_rating_kw, battery_rating_kw, battery_rating_kwh)
+    
     hi = HoppInterface(hopp_config_internal)
 
     hi.simulate(project_life=30)
@@ -96,4 +100,26 @@ def run_hopp_model(
         print("Total Cost")
         print(hi.print_output())
 
+    
     return hi
+
+if __name__ == "__main__":
+    hopp_config = load_yaml("./input-files/plant/hopp_config_wind_solar_battery_baseline.yaml")
+    hi1 = run_hopp_model(hopp_config, pv_rating_kw=0.0, battery_rating_kw=0.0, battery_rating_kwh=0.0, wind_turbine_rating_kw=0.0, verbose=False)
+    # hi2 = run_hopp_model(hopp_config, pv_rating_kw=3, battery_rating_kw=10, battery_rating_kwh=30, wind_turbine_rating_kw=1500, verbose=False)
+    print("aep: ", hi1.system.annual_energies)
+    print("schedule_curtailed_percentage: ", hi1.system.grid.schedule_curtailed_percentage)
+    print("generation_curtailed: ", sum(hi1.system.grid.generation_curtailed[:8760]))
+    print("curtailment_percent: ", hi1.system.grid.curtailment_percent)
+    print("generation_profile_pre_curtailment : ", sum(hi1.system.grid.generation_profile_pre_curtailment[:8760]))
+    print("generation_profile: ", sum(hi1.system.grid.generation_profile[:8760]))
+    print("capacity_factor_at_interconnect: ", (hi1.system.grid.capacity_factor_at_interconnect))
+    print("curtailment_ts_kw: ", sum(hi1.system.grid.curtailment_ts_kw[:8760]))
+    print("missed_load_percentage: ", (hi1.system.grid.missed_load_percentage))
+    
+
+    # generation_curtailed
+    # print("2: ", hi2.system.annual_energies)
+    # import pdb; pdb.set_trace()
+    # 1:  {"pv": 4311.335959899603, "wind": 6275.180227367345, "battery": 3.394572774872447, "hybrid": 10589.910760041843}
+    # 2:  {"pv": 4311.335959899603, "wind": 6275.180227367345, "battery": 3.394572774872447, "hybrid": 10589.910760041843}
