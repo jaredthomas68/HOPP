@@ -53,14 +53,14 @@ def recreate_hopp_config_for_optimization(hopp_config, pv_rating_kw=None, wind_t
             else:
                 battery_rating_kw = np.interp(battery_rating_kw, [smooth_tol, rating_tol], [smooth_tol, 0.1*rating_tol])
         else:
-            if "battery_om_per_kwh" in hopp_config_internal["config"]["cost_info"]:
+            if hopp_config_internal["config"]["cost_info"] and "battery_om_per_kwh" in hopp_config_internal["config"]["cost_info"]:
                 batt_om_per_kwh = hopp_config_internal["config"]["cost_info"]["battery_om_per_kwh"]
                 batt_om_per_kw = hopp_config_internal["config"]["cost_info"]["battery_om_per_kw"]
                 total_batt_om_per_kw = (battery_rating_kw*batt_om_per_kw + battery_rating_kwh*batt_om_per_kwh)/battery_rating_kw
                 hopp_config_internal["config"]["cost_info"]["battery_om_per_kw"] = total_batt_om_per_kw
 
             hopp_config_internal["technologies"]["battery"]["system_capacity_kw"] = battery_rating_kw
-        if "battery_om_per_kwh" in hopp_config_internal["config"]["cost_info"]:
+        if hopp_config_internal["config"]["cost_info"] and "battery_om_per_kwh" in hopp_config_internal["config"]["cost_info"]:
             hopp_config_internal["config"]["cost_info"].pop("battery_om_per_kwh")
     if battery_rating_kwh is not None and "battery" in hopp_config_internal["technologies"]:
         if battery_rating_kwh <= rating_tol:
